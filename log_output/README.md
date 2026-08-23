@@ -1,37 +1,43 @@
-# Chapter 2:
+# Log output ( Declarative Approach )
 
--Process of creating image locally, importing/deploying to kubernetes cluster and outputting logs
+## Chapter 2, ex- 1.3
 
-## Build image:
+- generates a random string when it starts and outputs
+  the string with a timestamp every 5 seconds.
+- deploy via manifests/deployment.yaml declarative approach in local kubernetes cluster.
 
-`docker build -t log-output:1.0 . `
+## Build image
 
-## Call local image into k8 cluster:
+```bash
+docker build -t log-output:1.0 .
+```
 
-`k3d image import log-output:1.0 `
+# Import local image into k3d:
 
-## Log output app
+```bash
+k3d image import log-output:1.0
+```
 
-Deploy with:
+# Deploy using kubernetes manifest:
 
-`kubectl apply -f log_output/manifests/deployment.yaml`
+```bash
+kubectl apply -f manifests/deployment.yaml
+```
 
-- deployment.apps/log-output created
+# Check deployments and find pods:
 
-## Find pods:
+```bash
+kubectl get deployments
+kubectl get pods
+```
 
-`kubectl get pods`
+# generate logs:
 
-- log-output-5cb75db87b-lcmdm 1/1 Running 0 13h
+```bash
+kubectl logs -f log-output-5cb75db87b-vftw9
+```
 
-## Generate logs: `kubectl logs <pod-name>`
-
-`kubectl logs log-output-5cb75db87b-lcmdm `
-
-## logs:
-
-2026-08-23T07:55:35.029Z: 225614cf1429785bccf854918c4b9d0c
-
-2026-08-23T07:55:40.033Z: 225614cf1429785bccf854918c4b9d0c
-
-2026-08-23T07:55:45.039Z: 225614cf1429785bccf854918c4b9d0c
+- 2026-08-23T17:13:44.340Z: 533166bc03d75d78285001662dac902e
+- 2026-08-23T17:13:49.346Z: 533166bc03d75d78285001662dac902e
+- 2026-08-23T17:13:54.352Z: 533166bc03d75d78285001662dac902e
+- 2026-08-23T17:13:59.362Z: 533166bc03d75d78285001662dac902e
