@@ -1,43 +1,75 @@
-# Log output ( Declarative Approach )
+# Log Output- External access with Ingress (1.7)
 
-## Chapter 2, ex- 1.3
+- refactor index.js so that random is generated once, timestamp in 5000ms added.
+- test the index.js locally first before creating image, node index.js
 
-- generates a random string when it starts and outputs
-  the string with a timestamp every 5 seconds.
-- deploy via manifests/deployment.yaml declarative approach in local kubernetes cluster.
-
-## Build image
+# build docker image:
 
 ```bash
-docker build -t log-output:1.0 .
+docker build -t log-output:ex-1.7 ./log_output
 ```
 
-# Import local image into k3d:
+# import the image into k3d:
 
 ```bash
-k3d image import log-output:1.0
+k3d image import log-output:ex-1.7
 ```
 
-# Deploy using kubernetes manifest:
+# change image in deployment.yaml: image: todo-app:ex-1.7
+
+- add env for PORT 3000 also in deployment.yaml
+
+# apply deployment:
 
 ```bash
-kubectl apply -f manifests/deployment.yaml
+kubectl apply -f log_output/manifests/deployment.yaml
 ```
 
-# Check deployments and find pods:
+# check deployment:
 
 ```bash
-kubectl get deployments
-kubectl get pods
+kubectl get deployment
 ```
 
-# generate logs:
+# create service.yaml:
+
+- define ClusterIP, port and targetport 3000
+
+# apply service:
 
 ```bash
-kubectl logs -f log-output-5cb75db87b-vftw9
+kubectl apply -f log_output/manifests/service.yaml
 ```
 
-- 2026-08-23T17:13:44.340Z: 533166bc03d75d78285001662dac902e
-- 2026-08-23T17:13:49.346Z: 533166bc03d75d78285001662dac902e
-- 2026-08-23T17:13:54.352Z: 533166bc03d75d78285001662dac902e
-- 2026-08-23T17:13:59.362Z: 533166bc03d75d78285001662dac902e
+# check the service is created with ClusterIp type ( not NodePort ) anymore:
+
+- kubernetes ClusterIP 10.43.0.1 <none> 443/TCP 24h
+- log-output-svc ClusterIP 10.43.249.29 <none> 2345/TCP 13s
+
+# check the pod's IP and PORT:
+
+```bash
+kubectl get endpoints log-output-svc
+```
+
+- log-output-svc 10.42.1.7:3000 112s
+
+# create ingress service with all the specs
+
+# apply ingress:
+
+```bash
+kubectl apply -f log_output/manifests/ingress.yaml
+```
+
+# check ingress:
+
+```bash
+kubectl get ingress
+```
+
+- log-output-ingress traefik \* 172.18.0.3,172.18.0.4,172.18.0.5 80 47s
+
+# check the backend is serving, ok:
+
+- http://localhost:8081/
