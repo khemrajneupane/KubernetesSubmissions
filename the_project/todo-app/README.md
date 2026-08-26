@@ -1,82 +1,77 @@
-# to_do app (1.6) - the project: step-4
+# to_do app (1.8) - the project: step-5
 
-- prepare k3d environment:
-  - remove existing cluster as it is not mapping with port
-
-    ```bash
-    k3d cluster delete
-    ```
-
-  - re-create cluster with port mapped:
-
-    ```bash
-    k3d cluster create --port 8082:30080@agent:0 -p 8081:80@loadbalancer --agents 2
-    ```
-
-    - check new cluster:
-
-    ```bash
-    k3d cluster list
-    ```
-
-        k3s-default   1/1       2/2      true
-
-# create docker image - 'todo-app:ex-1.6':
+- delete ingress used in log_output task as required by this exercise
 
 ```bash
-docker build -t todo-app:ex-1.6 ./the_project/todo-app
+kubectl delete -f log_output/manifests/ingress.yaml
 ```
 
-# import docker image into k3d:
+# build docker image:
 
 ```bash
-k3d image import todo-app:ex-1.6
+docker build -t todo-app:ex-1.8 ./the_project/todo-app
 ```
 
-# check k3d cluster is running:
+# import the image into k3d:
 
 ```bash
-k3d cluster list
+k3d image import todo-app:ex-1.8
 ```
 
-# change image in deployment.yaml: image: todo-app:ex-1.6
-
-# apply deploy to cluster:
+# apply deployment:
 
 ```bash
-kubectl apply -f ./the_project/todo-app/manifests/deployment.yaml
+kubectl apply -f the_project/todo-app/manifests/deployment.yaml
 ```
 
-# check pods
-
-`kubectl get pods` : in fact there are other pods also with the same name so to avoid logging the wrong pod, I pick the name from medatadata: name: todo-app.
-
-- todo-app-94b98d447-gvmw6 1/1 Running 0 18s
-
-# let kubernetes select the appropriate Pod belonging to the Deployment
+# check deployment:
 
 ```bash
-kubectl logs deployment/todo-app
+kubectl get deployment
 ```
 
-- Server started in port 8080
+# create service.yaml:
 
-# create NodePort Service, i.e. prepare service.yaml inside manifests file.
+- define ClusterIP, port:2345 and targetPort: 3000
 
-# apply service to cluster:
+# apply service:
 
 ```bash
-kubectl apply -f ./the_project/todo-app/manifests/service.yaml
+kubectl apply -f the_project/todo-app/manifests/service.yaml
 ```
 
-# check services
+# check the service is created with ClusterIp type ( not NodePort ) anymore:
 
 ```bash
 kubectl get services
 ```
 
-    - kubernetes ClusterIP 10.43.0.1 <none> 443/TCP 23m
-    - todo-app-svc NodePort 10.43.142.50 <none> 8080:30080/TCP 46s
+- todo-app-svc ClusterIP 10.43.68.28 <none> 2345/TCP 24s
 
-- I can see the HTML site:
-  http://localhost:8082/
+# check the pod's IP and PORT:
+
+```bash
+kubectl get endpoints todo-app-svc
+```
+
+- todo-app-svc 10.42.1.8:3000 3m18s
+
+# create ingress service with all the specs
+
+# apply ingress:
+
+```bash
+kubectl apply -f the_project/todo-app/manifests/ingress.yaml
+```
+
+# check ingress:
+
+```bash
+kubectl get ingress
+```
+
+- todo-app-ingress traefik \* 172.18.0.3,172.18.0.4,172.18.0.5 80 13s
+
+# check the backend is serving, ok:
+
+- http://localhost:8081/
