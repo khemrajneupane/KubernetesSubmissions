@@ -1,13 +1,13 @@
 # 1.9. More services ( pingpong ):
 
-- create a separate dedicated folder pingpong and related sub-folders and files along with index.js, Dockerfile, README.md, manifests and its related files all inside the_project main folder.
+- create a separate dedicated folder pingpong and related sub-folders and files along with index.js, Dockerfile, README.md, manifests and its related files all inside log_output main folder.
 - create index.js with counter initialized to 0 and increment on every request hit to /pingpong route. counter++
 - prepare response as required.
 
 # build docker image:
 
 ```bash
-docker build -t ping-pong:ex-1.9 ./the_project/ping_pong
+docker build -t ping-pong:ex-1.9 ./log_output/ping_pong
 ```
 
 # import into k3d:
@@ -19,7 +19,7 @@ k3d image import ping-pong:ex-1.9
 # create deployment and apply:
 
 ```bash
-kubectl apply -f the_project/ping_pong/manifests/deployment.yaml
+kubectl apply -f log_output/ping_pong/manifests/deployment.yaml
 ```
 
 # create service.yaml and apply:
@@ -27,7 +27,7 @@ kubectl apply -f the_project/ping_pong/manifests/deployment.yaml
 - define ClusterIP, port and targetport 3000
 
 ```bash
-kubectl apply -f the_project/ping_pong/manifests/service.yaml
+kubectl apply -f log_output/ping_pong/manifests/service.yaml
 ```
 
 - check endpoints:
