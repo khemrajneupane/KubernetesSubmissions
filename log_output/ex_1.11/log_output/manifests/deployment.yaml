@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-output
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: log-output
+  template:
+    metadata:
+      labels:
+        app: log-output
+    spec:
+      volumes:
+        - name: shared-storage
+          persistentVolumeClaim:
+            claimName: shared-pvc
+
+      containers:
+        - name: log-output
+          image: log_output:logoutput_ex-1.11
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+
+          volumeMounts:
+            - name: shared-storage
+              mountPath: /usr/src/app/files
