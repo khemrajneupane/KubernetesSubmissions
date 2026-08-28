@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-output
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: log-output
+
+  template:
+    metadata:
+      labels:
+        app: log-output
+
+    spec:
+      volumes:
+        - name: shared-logs
+          emptyDir: {}
+
+      containers:
+        - name: log-producer
+          image: log_producer:producer_1.10
+          imagePullPolicy: IfNotPresent
+
+          volumeMounts:
+            - name: shared-logs
+              mountPath: /usr/src/app/files
+
+        - name: log-consumer
+          image: log_consumer:consumer_1.10
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - containerPort: 3000
+
+          volumeMounts:
+            - name: shared-logs
+              mountPath: /usr/src/app/files
