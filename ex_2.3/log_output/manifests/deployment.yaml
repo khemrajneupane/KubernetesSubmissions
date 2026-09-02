@@ -1,20 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ping-pong-deploy
+  name: log-output
+  namespace: exercises
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ping-pong
+      app: log-output
   template:
     metadata:
       labels:
-        app: ping-pong
+        app: log-output
     spec:
       containers:
-        - name: ping-pong
-          image: ping_pong:ex-2.1
+        - name: log-output
+          image: log-output:ex-2.3
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
