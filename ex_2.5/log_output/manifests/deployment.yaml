@@ -1,21 +1,40 @@
 apiVersion: apps/v1
 kind: Deployment
+
 metadata:
   name: log-output
   namespace: exercises
+
 spec:
   replicas: 1
+
   selector:
     matchLabels:
       app: log-output
+
   template:
     metadata:
       labels:
         app: log-output
+
     spec:
+      volumes:
+        - name: config-volume
+          configMap:
+            name: log-output-config
+
       containers:
         - name: log-output
-          image: log-output:ex-2.3
+          image: log-output:ex-2.5
           imagePullPolicy: IfNotPresent
+
+          envFrom:
+            - configMapRef:
+                name: log-output-config
+
+          volumeMounts:
+            - name: config-volume
+              mountPath: /usr/src/app/config
+
           ports:
             - containerPort: 3000

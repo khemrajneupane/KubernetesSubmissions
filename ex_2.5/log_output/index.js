@@ -1,10 +1,13 @@
 const http = require("http");
 const crypto = require("crypto");
+const fs = require("fs");
 
 const PORT = process.env.PORT || 3000;
 const PING_PONG_URL = "http://ping-pong-svc:3000/pings";
+const CONFIG_FILE = "/usr/src/app/config/information.txt";
 
 const randomString = crypto.randomBytes(16).toString("hex");
+
 const server = http.createServer(async (req, res) => {
   if (req.url === "/") {
     try {
@@ -16,13 +19,21 @@ const server = http.createServer(async (req, res) => {
 
       const pongs = await response.text();
 
+      const fileContent = fs.readFileSync(CONFIG_FILE, "utf8").trim();
+      const message = process.env.MESSAGE;
+
       const timestamp = new Date().toISOString();
 
       res.writeHead(200, {
         "Content-Type": "text/plain",
       });
 
-      res.end(`${timestamp}: ${randomString}.\n` + `Ping / Pongs: ${pongs}`);
+      res.end(
+        `file content: ${fileContent}\n` +
+          `env variable: MESSAGE=${message}\n` +
+          `${timestamp}: ${randomString}.\n` +
+          `Ping / Pongs: ${pongs}`,
+      );
     } catch (error) {
       console.error("Failed to get ping-pong count:", error);
 

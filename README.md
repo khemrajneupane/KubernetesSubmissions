@@ -24,3 +24,4 @@
 - [2.2](https://github.com/khemrajneupane/KubernetesSubmissions/tree/2.2/ex_2.2)
 - [2.3](https://github.com/khemrajneupane/KubernetesSubmissions/tree/2.3/ex_2.3)
 - [2.4](https://github.com/khemrajneupane/KubernetesSubmissions/tree/2.4/ex_2.4)
+- [2.5](https://github.com/khemrajneupane/KubernetesSubmissions/tree/2.5/ex_2.5)
