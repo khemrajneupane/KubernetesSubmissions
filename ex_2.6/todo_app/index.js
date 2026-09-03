@@ -7,11 +7,14 @@ const { Readable } = require("stream");
 const PORT = process.env.PORT || 3000;
 
 const IMAGE_PATH = "/usr/src/app/files/image.jpg";
-const IMAGE_URL = "https://picsum.photos/1200";
+// const IMAGE_URL = "https://picsum.photos/1200";
 
-const TEN_MINUTES = 10 * 60 * 1000;
+// const TEN_MINUTES = 10 * 60 * 1000;
 
-const TODO_BACKEND_URL = "http://todo-backend-svc:3001";
+// const TODO_BACKEND_URL = "http://todo-backend-svc:3001";
+const IMAGE_URL = process.env.IMAGE_URL;
+const IMAGE_CACHE_TIME = Number(process.env.IMAGE_CACHE_TIME);
+const TODO_BACKEND_URL = process.env.TODO_BACKEND_URL;
 
 async function downloadImage() {
   const response = await fetch(IMAGE_URL);
@@ -34,7 +37,7 @@ async function imageIsFresh() {
 
   const age = Date.now() - stats.mtime.getTime();
 
-  return age < TEN_MINUTES;
+  return age < IMAGE_CACHE_TIME;
 }
 
 async function getTodos() {
