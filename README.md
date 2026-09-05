@@ -29,3 +29,4 @@
 - [2.7](https://github.com/khemrajneupane/KubernetesSubmissions/tree/2.7/ex_2.7)
 - [2.8](https://github.com/khemrajneupane/KubernetesSubmissions/tree/2.8/ex_2.8)
 - [2.9](https://github.com/khemrajneupane/KubernetesSubmissions/tree/2.9/ex_2.9)
+- [2.10](https://github.com/khemrajneupane/KubernetesSubmissions/tree/2.10/ex_2.10)

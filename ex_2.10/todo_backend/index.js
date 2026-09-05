@@ -28,15 +28,23 @@ app.post("/todos", async (req, res) => {
   try {
     const { todo } = req.body;
 
+    console.log("Received todo request");
+
     if (!todo) {
+      console.log("Todo rejected: empty todo");
+
       res.status(400).send("Todo is required");
       return;
     }
 
     if (todo.length > 140) {
+      console.log(`Todo rejected: too long (${todo.length} characters)`);
+
       res.status(400).send("Todo is too long");
       return;
     }
+
+    console.log(`Todo accepted: ${todo}`);
 
     await pool.query("INSERT INTO todos (todo) VALUES ($1)", [todo]);
 
