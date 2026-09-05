@@ -1,0 +1,24 @@
+apiVersion: batch/v1
+kind: CronJob
+
+metadata:
+  name: todo-generator
+  namespace: project
+
+spec:
+  schedule: "0 * * * *"
+
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: todo-generator
+              image: todo-generator:ex-2.9
+              imagePullPolicy: IfNotPresent
+
+              env:
+                - name: TODO_BACKEND_URL
+                  value: "http://todo-backend-svc:3001"
+
+          restartPolicy: Never

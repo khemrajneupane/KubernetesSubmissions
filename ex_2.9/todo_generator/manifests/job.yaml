@@ -1,0 +1,15 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: todo-generator
+  namespace: project
+spec:
+  template:
+    spec:
+      containers:
+        - name: todo-generator
+          image: todo-generator:ex-2.9
+          env:
+            - name: TODO_BACKEND_URL
+              value: "http://todo-backend-svc:3001"
+      restartPolicy: Never
