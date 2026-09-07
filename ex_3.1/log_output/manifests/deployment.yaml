@@ -25,7 +25,7 @@ spec:
 
       containers:
         - name: log-output
-          image: log-output:ex-2.5
+          image: khemrajneupane/log-output:ex-2.5
           imagePullPolicy: IfNotPresent
 
           envFrom:

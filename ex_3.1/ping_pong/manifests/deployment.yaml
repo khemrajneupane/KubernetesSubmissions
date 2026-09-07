@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: ping-pong
-          image: ping_pong:ex-2.7
+          image: khemrajneupane/ping_pong:ex-2.7
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000

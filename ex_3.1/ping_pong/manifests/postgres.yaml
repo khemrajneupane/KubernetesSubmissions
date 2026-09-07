@@ -26,6 +26,8 @@ spec:
           env:
             - name: POSTGRES_PASSWORD
               value: postgres
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
 
           volumeMounts:
             - name: postgres-data
@@ -37,7 +39,6 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce
-        storageClassName: local-path
         resources:
           requests:
             storage: 100Mi
