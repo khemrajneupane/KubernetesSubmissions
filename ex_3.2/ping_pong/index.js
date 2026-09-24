@@ -8,6 +8,12 @@ const pool = new Pool({
 });
 
 const server = http.createServer(async (req, res) => {
+  if (req.url === "/") {
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end("Ping-pong service is running\n");
+    return;
+  }
+
   if (req.url === "/pingpong") {
     try {
       const result = await pool.query(

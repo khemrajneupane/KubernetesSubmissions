@@ -4,10 +4,8 @@ metadata:
   name: log-output-ingress
   namespace: exercises
 spec:
-  ingressClassName: traefik
   rules:
-    - host: log-output.localhost
-      http:
+    - http:
         paths:
           - path: /
             pathType: Prefix

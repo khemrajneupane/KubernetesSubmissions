@@ -4,6 +4,7 @@ metadata:
   name: log-output-svc
   namespace: exercises
 spec:
+  type: NodePort
   selector:
     app: log-output
   ports:
