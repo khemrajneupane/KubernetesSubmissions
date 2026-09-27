@@ -37,3 +37,4 @@
 - [3.2](https://github.com/khemrajneupane/KubernetesSubmissions/tree/3.2/ex_3.2)
 - [3.3](https://github.com/khemrajneupane/KubernetesSubmissions/tree/3.3/ex_3.3)
 - [3.4](https://github.com/khemrajneupane/KubernetesSubmissions/tree/3.4/ex_3.4)
+- [3.5](https://github.com/khemrajneupane/KubernetesSubmissions/tree/3.5/ex_3.5)

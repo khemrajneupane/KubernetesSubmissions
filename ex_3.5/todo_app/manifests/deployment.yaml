@@ -19,7 +19,7 @@ spec:
             claimName: todo-app-pvc
       containers:
         - name: todo-app
-          image: todo_app:todo_app_ex_2.6
+          image: TODO/IMAGE
           envFrom:
             - configMapRef:
                 name: todo-app-config
