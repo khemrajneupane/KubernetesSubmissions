@@ -1,0 +1,129 @@
+name: Release application
+
+on:
+  push:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  PROJECT_ID: ${{ secrets.GKE_PROJECT }}
+  GKE_CLUSTER: dwk-cluster
+  GKE_ZONE: europe-north1-b
+
+  REGISTRY: europe-north1-docker.pkg.dev
+  REPOSITORY: my-repository
+
+  BRANCH: ${{ github.ref_name }}
+
+  TODO_APP_IMAGE: todo-app
+  TODO_BACKEND_IMAGE: todo-backend
+  TODO_GENERATOR_IMAGE: todo-generator
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Get the repository code
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # Authenticate to Google Cloud
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.SERVICE_ACCOUNT }}
+
+      # Install and configure gcloud
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      # Configure Docker to use Artifact Registry
+      - name: Configure Docker
+        run: |
+          gcloud --quiet auth configure-docker $REGISTRY
+
+      # Get credentials for the GKE cluster
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v3
+        with:
+          cluster_name: ${{ env.GKE_CLUSTER }}
+          project_id: ${{ env.PROJECT_ID }}
+          location: ${{ env.GKE_ZONE }}
+
+      # Create unique image tags
+      - name: Create image tags
+        run: |
+          echo "TODO_APP_TAG=$REGISTRY/$PROJECT_ID/$REPOSITORY/$TODO_APP_IMAGE:$BRANCH-$GITHUB_SHA" >> $GITHUB_ENV
+          echo "TODO_BACKEND_TAG=$REGISTRY/$PROJECT_ID/$REPOSITORY/$TODO_BACKEND_IMAGE:$BRANCH-$GITHUB_SHA" >> $GITHUB_ENV
+          echo "TODO_GENERATOR_TAG=$REGISTRY/$PROJECT_ID/$REPOSITORY/$TODO_GENERATOR_IMAGE:$BRANCH-$GITHUB_SHA" >> $GITHUB_ENV
+
+      # Build Docker images
+      - name: Build Todo app image
+        run: |
+          docker build \
+            -t $TODO_APP_TAG \
+            ./ex_3.6/todo_app
+
+      - name: Build Todo backend image
+        run: |
+          docker build \
+            -t $TODO_BACKEND_TAG \
+            ./ex_3.6/todo_backend
+
+      - name: Build Todo generator image
+        run: |
+          docker build \
+            -t $TODO_GENERATOR_TAG \
+            ./ex_3.6/todo_generator
+
+      # Push Docker images to Artifact Registry
+      - name: Push Todo app image
+        run: |
+          docker push $TODO_APP_TAG
+
+      - name: Push Todo backend image
+        run: |
+          docker push $TODO_BACKEND_TAG
+
+      - name: Push Todo generator image
+        run: |
+          docker push $TODO_GENERATOR_TAG
+
+      # Install Kustomize
+      - name: Set up Kustomize
+        uses: imranismail/setup-kustomize@v3
+
+      # Update Kustomize image references
+      - name: Update image references
+        working-directory: ./ex_3.6
+        run: |
+          cd todo_app
+          kustomize edit set image TODO/IMAGE=$TODO_APP_TAG
+
+          cd ../todo_backend
+          kustomize edit set image TODO/IMAGE=$TODO_BACKEND_TAG
+
+          cd ../todo_generator
+          kustomize edit set image todo-generator=$TODO_GENERATOR_TAG
+
+      # Deploy to Kubernetes
+      - name: Deploy
+        working-directory: ./ex_3.6
+        run: |
+          kustomize build . | kubectl apply -f -
+
+      # Wait for deployments to finish
+      - name: Check rollout
+        run: |
+          kubectl rollout status deployment/todo-app -n project
+          kubectl rollout status deployment/todo-backend -n project
+
+      # Show current services
+      - name: Show services
+        run: |
+          kubectl get services -n project -o wide
