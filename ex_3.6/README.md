@@ -125,3 +125,19 @@ kubectl create job \
 kubectl exec -it todo-postgres-0 -n project -- \
 psql -U postgres -c "SELECT * FROM todos ORDER BY id DESC LIMIT 5;"
 ```
+
+- I removed the job and just kept cronjob resource in the todo_generator
+- finally, i can get todo-app service's external ip to test the todo-app:
+
+```sh
+kubectl get service todo-app-svc -n project
+```
+
+```table
+NAME           TYPE           CLUSTER-IP       EXTERNAL-IP     PORT(S)          AGE
+todo-app-svc   LoadBalancer   34.118.234.181   34.88.155.239   3000:31949/TCP   80m
+```
+
+- I tested the app, it shows wikipedia links and addign new todo also works persistently at:
+  `http://34.88.155.239:3000/`
+- Everything works!!!
