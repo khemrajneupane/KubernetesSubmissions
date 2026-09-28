@@ -45,6 +45,15 @@ gcloud projects add-iam-policy-binding dwk-gke-507811 \
   --role="roles/artifactregistry.reader"
 ```
 
+- then we can check and verify that my account gets permission to pull images from Artifact Registry:
+
+```sh
+gcloud projects get-iam-policy dwk-gke-507811 \
+  --flatten="bindings[].members" \
+  --filter="bindings.members:473141739822-compute@developer.gserviceaccount.com AND bindings.role:roles/artifactregistry.reader" \
+  --format="table(bindings.role)"
+```
+
 - create workload identity pool to allow Google cloud to accept GitHub:
 
 ### workload identify pool:
