@@ -37,6 +37,14 @@ gcloud projects add-iam-policy-binding dwk-gke-507811 \
   --member="serviceAccount:github-actions-sa@dwk-gke-507811.iam.gserviceaccount.com"
 ```
 
+- This gives the GKE node permission to pull images from Artifact Registry:
+
+```sh
+gcloud projects add-iam-policy-binding dwk-gke-507811 \
+  --member="serviceAccount:473141739822-compute@developer.gserviceaccount.com" \
+  --role="roles/artifactregistry.reader"
+```
+
 - create workload identity pool to allow Google cloud to accept GitHub:
 
 ### workload identify pool:
@@ -86,38 +94,6 @@ gcloud container clusters create dwk-cluster \
   --machine-type=e2-small
 ```
 
-- add image connections, the image to run in container is mapped with name and image keys in kustomization spec
-
-```yaml
-images:
-  - name: TODO/IMAGE
-    newName: khemrajneupane/todo_backend
-    newTag: ex-3.5
-```
-
-- In my case, however, the above image is not existing in the dockerhub so, I create it:
-
-```sh
-docker build -t khemrajneupane/todo_backend:ex-3.5 ./ex_3.5/todo_backend
-```
-
-- then push image to dockerhub:
-
-```sh
-docker push khemrajneupane/todo_backend:ex-3.5
-```
-
-- create cluster in GC again as previous was deleted:
-
-```sh
-gcloud container clusters create dwk-cluster \
-  --zone=europe-north1-b \
-  --cluster-version=1.36 \
-  --disk-size=32 \
-  --num-nodes=1 \
-  --machine-type=e2-small
-```
-
 - check if there is connection to new cluster if pods exist:
 
 ```sh
@@ -125,3 +101,27 @@ kubectl get nodes
 ```
 
 - cluster created, nodes are ready. Now, I commit to github and check all integrity.
+- we still need to create todos table in postgres:
+
+```sql
+CREATE TABLE todos (
+    id SERIAL PRIMARY KEY,
+    todo TEXT NOT NULL
+);
+```
+
+- since we have hourly running cronjob, lets test it immediately by creating immediate job now:
+
+```sh
+kubectl create job \
+  --from=cronjob/todo-generator \
+  todo-generator-test \
+  -n project
+```
+
+- then verify the generator inserted a row in todos:
+
+```sh
+kubectl exec -it todo-postgres-0 -n project -- \
+psql -U postgres -c "SELECT * FROM todos ORDER BY id DESC LIMIT 5;"
+```
