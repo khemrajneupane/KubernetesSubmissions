@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: todo-generator
-  namespace: project
+
 spec:
   template:
     spec:

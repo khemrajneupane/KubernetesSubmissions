@@ -3,7 +3,6 @@ kind: CronJob
 
 metadata:
   name: todo-generator
-  namespace: project
 
 spec:
   schedule: "0 * * * *"

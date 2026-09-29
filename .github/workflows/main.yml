@@ -1,7 +1,7 @@
 name: Release application
 
 on:
-  push:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -16,7 +16,6 @@ env:
   REPOSITORY: my-repository
 
   BRANCH: ${{ github.ref_name }}
-
   TODO_APP_IMAGE: todo-app
   TODO_BACKEND_IMAGE: todo-backend
   TODO_GENERATOR_IMAGE: todo-generator
@@ -67,19 +66,19 @@ jobs:
         run: |
           docker build \
             -t $TODO_APP_TAG \
-            ./ex_3.6/todo_app
+            ./ex_3.7/todo_app
 
       - name: Build Todo backend image
         run: |
           docker build \
             -t $TODO_BACKEND_TAG \
-            ./ex_3.6/todo_backend
+            ./ex_3.7/todo_backend
 
       - name: Build Todo generator image
         run: |
           docker build \
             -t $TODO_GENERATOR_TAG \
-            ./ex_3.6/todo_generator
+            ./ex_3.7/todo_generator
 
       # Push Docker images to Artifact Registry
       - name: Push Todo app image
@@ -100,7 +99,7 @@ jobs:
 
       # Update Kustomize image references
       - name: Update image references
-        working-directory: ./ex_3.6
+        working-directory: ./ex_3.7
         run: |
           cd todo_app
           kustomize edit set image TODO/IMAGE=$TODO_APP_TAG
@@ -110,20 +109,33 @@ jobs:
 
           cd ../todo_generator
           kustomize edit set image todo-generator=$TODO_GENERATOR_TAG
+      # Namespace creation
+      - name: Set deployment namespace
+        working-directory: ./ex_3.7
+        run: |
+          if [ "$BRANCH" = "main" ]; then
+            NAMESPACE=project
+          else
+            NAMESPACE=$BRANCH
+          fi
 
+          echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
+
+          kubectl create namespace "$NAMESPACE" || true
+          kustomize edit set namespace "$NAMESPACE"
       # Deploy to Kubernetes
       - name: Deploy
-        working-directory: ./ex_3.6
+        working-directory: ./ex_3.7
         run: |
           kustomize build . | kubectl apply -f -
 
       # Wait for deployments to finish
       - name: Check rollout
         run: |
-          kubectl rollout status deployment/todo-app -n project
-          kubectl rollout status deployment/todo-backend -n project
+          kubectl rollout status deployment/todo-app -n $NAMESPACE
+          kubectl rollout status deployment/todo-backend -n $NAMESPACE
 
       # Show current services
       - name: Show services
         run: |
-          kubectl get services -n project -o wide
+          kubectl get services -n $NAMESPACE -o wide

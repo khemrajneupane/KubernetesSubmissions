@@ -3,7 +3,6 @@ kind: ConfigMap
 
 metadata:
   name: todo-app-config
-  namespace: project
 
 data:
   IMAGE_URL: "https://picsum.photos/1200"
