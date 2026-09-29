@@ -35,3 +35,19 @@ kubectl get namespaces
 ```sh
 git push origin --delete feature-todo
 ```
+
+- Delete environment workflow triggers on `feature-todo`branch deletion:
+
+```table
+Run kubectl delete namespace "$NAMESPACE"
+namespace "feature-todo" deleted
+```
+
+- everything works!!
+
+- finally delete cluster:
+
+```sh
+gcloud container clusters delete dwk-cluster \
+  --zone europe-north1-b
+```
