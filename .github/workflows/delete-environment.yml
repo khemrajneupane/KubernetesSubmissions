@@ -41,6 +41,7 @@ jobs:
             echo "NAMESPACE=project" >> $GITHUB_ENV
           else
             echo "NAMESPACE=${{ github.event.ref }}" >> $GITHUB_ENV
+          fi
 
       - name: Protect main environment
         run: |
