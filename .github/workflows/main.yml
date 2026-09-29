@@ -66,19 +66,19 @@ jobs:
         run: |
           docker build \
             -t $TODO_APP_TAG \
-            ./ex_3.7/todo_app
+            ./ex_3.8/todo_app
 
       - name: Build Todo backend image
         run: |
           docker build \
             -t $TODO_BACKEND_TAG \
-            ./ex_3.7/todo_backend
+            ./ex_3.8/todo_backend
 
       - name: Build Todo generator image
         run: |
           docker build \
             -t $TODO_GENERATOR_TAG \
-            ./ex_3.7/todo_generator
+            ./ex_3.8/todo_generator
 
       # Push Docker images to Artifact Registry
       - name: Push Todo app image
@@ -99,7 +99,7 @@ jobs:
 
       # Update Kustomize image references
       - name: Update image references
-        working-directory: ./ex_3.7
+        working-directory: ./ex_3.8
         run: |
           cd todo_app
           kustomize edit set image TODO/IMAGE=$TODO_APP_TAG
@@ -111,7 +111,7 @@ jobs:
           kustomize edit set image todo-generator=$TODO_GENERATOR_TAG
       # Namespace creation
       - name: Set deployment namespace
-        working-directory: ./ex_3.7
+        working-directory: ./ex_3.8
         run: |
           if [ "$BRANCH" = "main" ]; then
             NAMESPACE=project
@@ -125,7 +125,7 @@ jobs:
           kustomize edit set namespace "$NAMESPACE"
       # Deploy to Kubernetes
       - name: Deploy
-        working-directory: ./ex_3.7
+        working-directory: ./ex_3.8
         run: |
           kustomize build . | kubectl apply -f -
 
