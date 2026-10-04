@@ -5,3 +5,4 @@ resources:
   - todo_app
   - todo_backend
   - todo_generator
+  - todo_backup

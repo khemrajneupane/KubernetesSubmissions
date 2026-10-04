@@ -1,0 +1,41 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: todo-db-backup
+
+spec:
+  schedule: "0 0 * * *"
+
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: todo-backup
+          restartPolicy: Never
+
+          volumes:
+            - name: backup
+              emptyDir: {}
+
+          initContainers: # makes sure this container runs before the upload container
+            - name: pg-dump
+              image: postgres:16
+              env:
+                - name: PGPASSWORD
+                  value: postgres
+              command: ["/bin/sh", "-c"]
+              args:
+                - pg_dump -h todo-postgres-svc -U postgres -d postgres > /backup/todo-backup-$(date -u +%Y-%m-%dT%H-%M-%SZ).sql
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
+
+          containers:
+            - name: upload
+              image: google/cloud-sdk:slim
+              command: ["/bin/sh", "-c"]
+              args:
+                - gcloud storage cp /backup/*.sql gs://dwk-gke-507811-todo-backups/
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
