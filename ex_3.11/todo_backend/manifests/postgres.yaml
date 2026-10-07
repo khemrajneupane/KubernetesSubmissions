@@ -20,6 +20,13 @@ spec:
       containers:
         - name: postgres
           image: postgres:16
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
           ports:
             - containerPort: 5432
           env:
@@ -38,8 +45,6 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce
-
-        storageClassName: standard-rwo
 
         resources:
           requests:
