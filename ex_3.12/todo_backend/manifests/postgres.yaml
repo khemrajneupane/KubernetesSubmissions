@@ -45,6 +45,7 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce
+        storageClassName: standard-rwo
 
         resources:
           requests:
