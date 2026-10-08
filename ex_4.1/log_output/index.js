@@ -9,6 +9,25 @@ const CONFIG_FILE = "/usr/src/app/config/information.txt";
 const randomString = crypto.randomBytes(16).toString("hex");
 
 const server = http.createServer(async (req, res) => {
+  if (req.url === "/healthz") {
+    try {
+      const response = await fetch(PING_PONG_URL);
+
+      if (!response.ok) {
+        throw new Error(`Ping-pong request failed: ${response.status}`);
+      }
+
+      res.writeHead(200);
+      res.end("OK");
+    } catch (error) {
+      console.error("Readiness check failed:", error);
+
+      res.writeHead(500);
+      res.end("Ping-pong unavailable");
+    }
+
+    return;
+  }
   if (req.url === "/") {
     try {
       const response = await fetch(PING_PONG_URL);

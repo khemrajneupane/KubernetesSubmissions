@@ -8,6 +8,22 @@ const pool = new Pool({
 });
 
 const server = http.createServer(async (req, res) => {
+  if (req.url === "/healthz") {
+    try {
+      await pool.query("SELECT 1");
+
+      res.writeHead(200);
+      res.end("OK");
+    } catch (error) {
+      console.error("Readiness check failed:", error);
+
+      res.writeHead(500);
+      res.end("Database unavailable");
+    }
+
+    return;
+  }
+
   if (req.url === "/") {
     try {
       const result = await pool.query(

@@ -15,10 +15,16 @@ spec:
     spec:
       containers:
         - name: ping-pong
-          image: khemrajneupane/ping_pong:ex-3.4
+          image: ping_pong:ex-4.1
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
           env:
             - name: DATABASE_URL
               value: "postgres://postgres:postgres@postgres-svc:5432/postgres"
