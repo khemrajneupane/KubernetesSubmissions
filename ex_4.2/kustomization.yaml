@@ -3,6 +3,8 @@ kind: Kustomization
 namespace: project
 resources:
   - manifests/namespace.yaml
+  - storage/persistentvolume.yaml
+  - storage/persistentvolumeclaim.yaml
   - todo_app
   - todo_backend
   - todo_generator

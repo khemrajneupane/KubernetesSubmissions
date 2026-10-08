@@ -10,4 +10,4 @@ resources:
 images:
   - name: TODO/IMAGE
     newName: khemrajneupane/todo_backend
-    newTag: ex-3.5
+    newTag: ex-4.2

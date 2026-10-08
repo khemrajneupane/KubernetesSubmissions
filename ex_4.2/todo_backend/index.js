@@ -9,6 +9,30 @@ const pool = new Pool({
 });
 
 app.use(express.json());
+let isHealthy = true;
+
+app.get("/healthz", async (req, res) => {
+  if (!isHealthy) {
+    return res.status(500).json({ status: "unhealthy" });
+  }
+
+  try {
+    await pool.query("SELECT 1");
+
+    return res.status(200).json({ status: "ok" });
+  } catch (error) {
+    console.error("Health check failed:", error);
+
+    return res.status(500).json({ status: "unhealthy" });
+  }
+});
+app.post("/break", (req, res) => {
+  isHealthy = false;
+
+  res.status(200).json({
+    status: "broken",
+  });
+});
 
 app.get("/todos", async (req, res) => {
   try {

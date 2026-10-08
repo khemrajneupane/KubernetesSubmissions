@@ -67,6 +67,17 @@ async function createTodo(todo) {
 
   return await response.json();
 }
+async function breakBackend() {
+  const response = await fetch(`${TODO_BACKEND_URL}/break`, {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Todo backend failed: ${response.status}`);
+  }
+
+  return await response.json();
+}
 
 function getRequestBody(req) {
   return new Promise((resolve, reject) => {
@@ -160,6 +171,28 @@ const server = http.createServer(async (req, res) => {
       });
 
       res.end("Failed to create todo");
+    }
+
+    return;
+  }
+
+  if (req.method === "POST" && req.url === "/break") {
+    try {
+      await breakBackend();
+
+      res.writeHead(302, {
+        Location: "/",
+      });
+
+      res.end();
+    } catch (error) {
+      console.error("Failed to break Todo backend:", error);
+
+      res.writeHead(500, {
+        "Content-Type": "text/plain",
+      });
+
+      res.end("Failed to break Todo backend");
     }
 
     return;
@@ -285,7 +318,29 @@ const server = http.createServer(async (req, res) => {
     </button>
 
   </form>
-
+<form
+  method="POST"
+  action="/break"
+  style="
+    margin-bottom: 40px;
+  "
+>
+  <button
+    type="submit"
+    style="
+      padding: 12px 24px;
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    "
+  >
+    Break App
+  </button>
+</form>
 
   <h2 style="
     font-size: 24px;
@@ -326,7 +381,9 @@ const server = http.createServer(async (req, res) => {
         "Content-Type": "text/plain",
       });
 
-      res.end("Failed to load Todo App");
+      res.end(
+        "System Failure. The todo app is currently unhealthy. Please wait for recovery",
+      );
     }
 
     return;
