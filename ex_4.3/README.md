@@ -63,3 +63,5 @@ count(kube_pod_info{namespace="project", created_by_kind="StatefulSet"})
 - above query output:
   `{} 1`
 - Hence, i successfully installed Prometheus with Helm, accessed it UI through kubernetes sercice using port-forwarding technique and prepared a query to search the numbers of pods running in project namespace.
+
+![PromQL Count StatefulSet in Project Namespace](prometheus_po_count.png)
