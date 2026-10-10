@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: ping-pong-rollout
+  namespace: exercises
+spec:
+  replicas: 1
+  strategy:
+    canary:
+      steps:
+        - setWeight: 50
+        - analysis:
+            templates:
+              - templateName: ping-pong-cpu-check
+        - pause: {}
+  selector:
+    matchLabels:
+      app: ping-pong
+  template:
+    metadata:
+      labels:
+        app: ping-pong
+      annotations:
+        rollout-test: normal-cpu-threshold
+    spec:
+      containers:
+        - name: ping-pong
+          image: ping_pong:ex-4.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          env:
+            - name: DATABASE_URL
+              value: "postgres://postgres:postgres@postgres-svc:5432/postgres"
