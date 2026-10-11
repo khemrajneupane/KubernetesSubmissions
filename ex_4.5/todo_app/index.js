@@ -67,6 +67,25 @@ async function createTodo(todo) {
 
   return await response.json();
 }
+
+async function markTodoDone(id) {
+  const response = await fetch(`${TODO_BACKEND_URL}/todos/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      done: true,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to mark todo as done: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
 async function breakBackend() {
   const response = await fetch(`${TODO_BACKEND_URL}/break`, {
     method: "POST",
@@ -95,20 +114,40 @@ function getRequestBody(req) {
   });
 }
 
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (character) => {
+    const entities = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    };
+
+    return entities[character];
+  });
+}
+
 function createTodoList(todos) {
   return todos
-    .map(
-      (todo) => `
-        <div style="
-          background-color: #ffffff;
-          border: 1px solid #e9ecef;
-          border-radius: 6px;
-          display: flex;
-          align-items: center;
-          min-height: 56px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-          overflow: hidden;
-        ">
+    .map((todo) => {
+      const isDone = todo.done;
+
+      return `
+        <div
+          class="todo-row"
+          data-todo-id="${todo.id}"
+          style="
+            background-color: #ffffff;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            min-height: 56px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            overflow: hidden;
+          "
+        >
           <div style="
             width: 6px;
             min-height: 56px;
@@ -116,18 +155,40 @@ function createTodoList(todos) {
             align-self: stretch;
           "></div>
 
-          <p style="
-            margin: 0;
-            padding: 14px 16px;
-            font-size: 16px;
-            font-weight: 500;
-            color: #000000;
-          ">
-            ${todo}
-          </p>
+          <p
+            class="todo-text"
+            style="
+              flex: 1;
+              margin: 0;
+              padding: 14px 16px;
+              font-size: 16px;
+              font-weight: 500;
+              color: #000000;
+              overflow-wrap: anywhere;
+              ${isDone ? "text-decoration: line-through; color: #6b7280;" : ""}
+            "
+          >${escapeHtml(todo.todo)}</p>
+
+          <button
+            type="button"
+            class="mark-done-button"
+            ${isDone ? "disabled" : ""}
+            style="
+              margin: 8px;
+              padding: 10px 14px;
+              background-color: ${isDone ? "#e9ecef" : "#198754"};
+              color: ${isDone ? "#198754" : "#ffffff"};
+              border: none;
+              border-radius: 6px;
+              font-size: 14px;
+              font-weight: 600;
+              white-space: nowrap;
+              cursor: ${isDone ? "default" : "pointer"};
+            "
+          >${isDone ? "Done" : "Mark done"}</button>
         </div>
-      `,
-    )
+      `;
+    })
     .join("");
 }
 
@@ -176,6 +237,29 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  const markDoneMatch = req.url.match(/^\/todos\/(\d+)\/done$/);
+
+  if (req.method === "POST" && markDoneMatch) {
+    try {
+      const id = Number(markDoneMatch[1]);
+
+      await markTodoDone(id);
+
+      res.writeHead(204);
+      res.end();
+    } catch (error) {
+      console.error("Failed to mark todo as done:", error);
+
+      res.writeHead(502, {
+        "Content-Type": "text/plain",
+      });
+
+      res.end("Failed to mark todo as done");
+    }
+
+    return;
+  }
+
   if (req.method === "POST" && req.url === "/break") {
     try {
       await breakBackend();
@@ -213,6 +297,7 @@ const server = http.createServer(async (req, res) => {
 
 <html lang="en">
 
+
 <head>
   <meta charset="UTF-8">
 
@@ -222,7 +307,44 @@ const server = http.createServer(async (req, res) => {
   >
 
   <title>Todo App</title>
+
+  <script>
+    document.addEventListener("click", async (event) => {
+      const button = event.target.closest(".mark-done-button");
+
+      if (!button || button.disabled) {
+        return;
+      }
+
+      const row = button.closest(".todo-row");
+      const todoId = row.dataset.todoId;
+      const todoText = row.querySelector(".todo-text");
+
+      // Optimistically update the UI immediately.
+      button.textContent = "Done";
+      button.disabled = true;
+      button.style.backgroundColor = "#e9ecef";
+      button.style.color = "#198754";
+      button.style.cursor = "default";
+      todoText.style.textDecoration = "line-through";
+      todoText.style.color = "#6b7280";
+
+      try {
+        const response = await fetch("/todos/" + todoId + "/done", {
+          method: "POST",
+        });
+
+        if (!response.ok) {
+          throw new Error("Could not save the todo status");
+        }
+      } catch (error) {
+        console.error("Failed to mark todo as done:", error);
+        alert("Could not save this change. Refresh the page to see the saved status.");
+      }
+    });
+  </script>
 </head>
+
 
 <body style="
   margin: 0;

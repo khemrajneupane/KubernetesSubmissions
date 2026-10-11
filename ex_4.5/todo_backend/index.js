@@ -36,15 +36,45 @@ app.post("/break", (req, res) => {
 
 app.get("/todos", async (req, res) => {
   try {
-    const result = await pool.query("SELECT todo FROM todos ORDER BY id");
+    const result = await pool.query(
+      "SELECT id, todo, done FROM todos ORDER BY id",
+    );
 
-    const todos = result.rows.map((row) => row.todo);
-
-    res.status(200).json(todos);
+    res.status(200).json(result.rows);
   } catch (error) {
     console.error("Failed to get todos:", error);
 
     res.status(500).send("Failed to get todos");
+  }
+});
+
+app.put("/todos/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const { done } = req.body;
+
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).send("Invalid todo ID");
+    }
+
+    if (typeof done !== "boolean") {
+      return res.status(400).send("Done must be a boolean");
+    }
+
+    const result = await pool.query(
+      "UPDATE todos SET done = $1 WHERE id = $2 RETURNING id, todo, done",
+      [done, id],
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).send("Todo not found");
+    }
+
+    res.status(200).json(result.rows[0]);
+  } catch (error) {
+    console.error("Failed to update todo:", error);
+
+    res.status(500).send("Failed to update todo");
   }
 });
 
