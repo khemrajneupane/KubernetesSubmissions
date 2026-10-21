@@ -128,3 +128,33 @@ log-output   Synced        Healthy
 ```
 
 - to test complete GitOps workflow, I will make some tiny and harmless changes in log_output/index.js e.g. in the `/`route, I can add extra text: `GitOps test` and commit to GitHub.
+- again, new image tag pushed to DockerHub after successful github workflow run
+- git pull verifies new image tag used now in deployment: `khemrajneupane/log-output:sha-5005ebc0fdee98e9398a977520717b49c193312a`
+- Check Kubernetes has completed the update and the new Pod is ready:
+
+```sh
+kubectl rollout status deployment/log-output -n exercises --timeout=120s
+```
+
+- Lets verify the earlier changes in index.js shows up. Portforward log output svc:
+
+```sh
+kubectl port-forward -n exercises service/log-output-svc 8080:2345
+```
+
+```sh
+ curl http://localhost:8080/
+```
+
+- the above output clearly shows those extra texts added in index.js `GitOps test: deployed automatically!`:
+
+```table
+file content: this text is from file
+env variable: MESSAGE=hello world
+2026-10-21T16:43:35.015Z: 1708b768c2d980945814c8e3112a0205.
+Ping / Pongs: 2
+
+GitOps test: deployed automatically!%
+```
+
+- Hence, the complete path from code changes through Github Actions and ArgoCD to the running log_output application verifies Baby steps to GitOps is working!!!
