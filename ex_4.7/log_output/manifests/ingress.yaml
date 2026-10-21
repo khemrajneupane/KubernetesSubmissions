@@ -4,6 +4,7 @@ metadata:
   name: log-output-ingress
   namespace: exercises
 spec:
+  ingressClassName: traefik
   rules:
     - http:
         paths:
