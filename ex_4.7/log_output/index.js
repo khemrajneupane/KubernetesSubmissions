@@ -51,7 +51,8 @@ const server = http.createServer(async (req, res) => {
         `file content: ${fileContent}\n` +
           `env variable: MESSAGE=${message}\n` +
           `${timestamp}: ${randomString}.\n` +
-          `Ping / Pongs: ${pongs}`,
+          `Ping / Pongs: ${pongs}\n` +
+          `GitOps test: deployed automatically!`,
       );
     } catch (error) {
       console.error("Failed to get ping-pong count:", error);

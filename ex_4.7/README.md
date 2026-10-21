@@ -99,3 +99,32 @@ argocd-server-7545844984-qlthd                     1/1     Running   0          
 - created also workflow `ex-4.7-gitops.yml` with DOCKERHUB_USERNAME, DOCKERHUB_TOKEN ...
 - Create deplpoyment via kustomization.yaml
 - commit and push to GitHub.
+- github action passed and dockerhub gets a new image with new tag `sha-921fed18ce2b8a6f88eab2b9d...`
+- git pull to check if deployment gets new image with the above mentioned tag.
+
+```sh
+git pull origin main
+```
+
+- pull updates our deploymen.yaml where image is now: `image: khemrajneupane/log-output:sha-921fed18ce2b8a6f88eab2b9d04a7521a8c92be4`
+- lets registers the log-output application with Argo CD by deploying the argocd/application.yaml:
+
+```sh
+kubectl apply -f ex_4.7/log_output/argocd/application.yaml
+```
+
+- after applying now ArgoCD knows which repository of mine to monitor.
+- check ArgoCD synchronization:
+
+```sh
+kubectl get application -n argocd log-output
+```
+
+- above output:
+
+```table
+NAME         SYNC STATUS   HEALTH STATUS
+log-output   Synced        Healthy
+```
+
+- to test complete GitOps workflow, I will make some tiny and harmless changes in log_output/index.js e.g. in the `/`route, I can add extra text: `GitOps test` and commit to GitHub.
