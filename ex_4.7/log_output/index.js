@@ -52,7 +52,7 @@ const server = http.createServer(async (req, res) => {
           `env variable: MESSAGE=${message}\n` +
           `${timestamp}: ${randomString}.\n` +
           `Ping / Pongs: ${pongs}\n` +
-          `GitOps test: deployed automatically!`,
+          `GitOps test: one more automatic deploy test!`,
       );
     } catch (error) {
       console.error("Failed to get ping-pong count:", error);
