@@ -28,3 +28,24 @@ kubectl get applications -n argocd
 ```
 
 - I made some harmless changes in the todo_app/manifests/deployment.yaml to commit to GitHub and test if Argo CD synch that changes into the cluster.
+
+```yaml
+annotations:
+  gitops-test: "exercise-4.8-gitops"
+```
+
+- now check if the above changes in deployment is applied by ArgoCD into our Kubernetes cluster without having me to do `kubectl apply .`:
+
+```sh
+kubectl get deployment todo-app -n project -o yaml
+```
+
+- the above logs the harmless annotation:
+
+```yaml
+metadata:
+  annotations:
+    argocd.argoproj.io/tracking-id: todo-app:apps/Deployment:project/todo-app
+    deployment.kubernetes.io/revision: "2"
+    gitops-test: exercise-4.8-gitops
+```
