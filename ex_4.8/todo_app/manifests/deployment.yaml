@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: todo-app
+  annotations:
+    gitops-test: "exercise-4.8-gitops"
 spec:
   replicas: 1
   strategy:
