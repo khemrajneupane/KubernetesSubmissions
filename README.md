@@ -55,3 +55,4 @@
 - [4.5](https://github.com/khemrajneupane/KubernetesSubmissions/tree/4.5/ex_4.5)
 - [4.6](https://github.com/khemrajneupane/KubernetesSubmissions/tree/4.6/ex_4.6)
 - [4.7](https://github.com/khemrajneupane/KubernetesSubmissions/tree/4.7/ex_4.7)
+- [4.8](https://github.com/khemrajneupane/KubernetesSubmissions/tree/4.8/ex_4.8)
