@@ -2,17 +2,13 @@ const WIKIPEDIA_URL = "https://en.wikipedia.org/wiki/Special:Random";
 const TODO_BACKEND_URL = process.env.TODO_BACKEND_URL;
 
 async function getRandomWikipediaUrl() {
-  const response = await fetch(WIKIPEDIA_URL, {
-    redirect: "manual",
-  });
+  const response = await fetch(WIKIPEDIA_URL);
 
-  const location = response.headers.get("location");
-
-  if (!location) {
-    throw new Error("No Location header found");
+  if (!response.ok) {
+    throw new Error(`Wikipedia returned ${response.status}`);
   }
 
-  return new URL(location, WIKIPEDIA_URL).href;
+  return response.url;
 }
 
 async function createTodo(url) {

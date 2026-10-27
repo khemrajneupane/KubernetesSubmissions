@@ -88,3 +88,63 @@ docker exec k3d-k3s-default-agent-0 mkdir -p /tmp/kube-backups-production
 - next, we need to let argocd track staging and production separately. Hence, we can create for staging: `todo-staging-application.yaml` and for production: `todo-production-application.yaml`
 - since argocd config is made to watch changes in `main` branch via `targetRevision: main` and agrocd will deploy them to `staging` namespace destination, we first push to main branch.
 - after testing staging we create Git tag: `4.9` as done in production argocd config: `targetRevision: 4.9`. Then we will test in production namespace.
+
+### apply argocd config for staging todo:
+
+```sh
+kubectl apply -f ex_4.9/argocd/todo-staging-application.yaml
+```
+
+- Lets verify if todo-staging is synchronized with GitHub and its Kubernetes resources are healthy.
+
+```sh
+kubectl get applications -n argocd
+```
+
+```table
+NAME           SYNC STATUS   HEALTH STATUS
+todo-staging   Synced        Progressing
+```
+
+- We can see todo-staging is synced so, Argo CD has matched the staging configuration to GitHub however, health status is still processing. We can check further pods in staging to figureout why.
+
+```sh
+ubectl get pods -n staging
+```
+
+- the main staging services are running correctly: the broadcaster, todo app, backend, and PostgreSQL are all Running. However, issue is with todo-generator cronjobs:
+
+```table
+NAME                            READY   STATUS    RESTARTS   AGE
+broadcaster-7f984d9695-j7x8s    1/1     Running   0          3h19m
+todo-app-77d4cf858c-xqrp7       1/1     Running   0          3h19m
+todo-backend-7dc5458ccb-lln5t   1/1     Running   0          3h19m
+todo-generator-29885040-bdm7v   0/1     Error     0          93m
+todo-generator-29885040-czmwv   0/1     Error     0          84m
+todo-postgres-0                 1/1     Running   0          3h19m
+```
+
+- lets check the logs of any one failing pod of generator:
+
+```sh
+kubectl logs todo-generator-29885100-tfgnd -n staging
+```
+
+```table
+Error: No Location header found
+    at getRandomWikipediaUrl (/usr/src/app/index.js:12:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async main (/usr/src/app/index.js:39:15)
+```
+
+- the above may have happened because the code todo_generator/index.js expects wikipedia to return a location header containing the destination article URL. So, if wikipedia returns a response without that header, the generator throws the error. After this fix, I will re-build image and add to cronjob.yaml and job.yaml:
+
+```sh
+docker build -t todo-generator:ex-4.9 ./ex_4.9/base/todo_generator
+```
+
+- import image into k3d:
+
+```sh
+k3d image import todo-generator:ex-4.9 -c k3s-default
+```
