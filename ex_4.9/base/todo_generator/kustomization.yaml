@@ -7,4 +7,4 @@ resources:
 images:
   - name: todo-generator
     newName: khemrajneupane/todo_generator
-    newTag: ex-3.5
+    newTag: ex-4.9

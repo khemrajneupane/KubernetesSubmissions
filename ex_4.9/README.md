@@ -140,11 +140,13 @@ Error: No Location header found
 - the above may have happened because the code todo_generator/index.js expects wikipedia to return a location header containing the destination article URL. So, if wikipedia returns a response without that header, the generator throws the error. After this fix, I will re-build image and add to cronjob.yaml and job.yaml:
 
 ```sh
-docker build -t todo-generator:ex-4.9 ./ex_4.9/base/todo_generator
+docker build -t khemrajneupane/todo_generator:ex-4.9 ./ex_4.9/base/todo_generator
 ```
 
-- import image into k3d:
+- push to dockerhub:
 
 ```sh
-k3d image import todo-generator:ex-4.9 -c k3s-default
+docker push khemrajneupane/todo_generator:ex-4.9
 ```
+
+- commit to main branch again.
