@@ -150,3 +150,119 @@ docker push khemrajneupane/todo_generator:ex-4.9
 ```
 
 - commit to main branch again.
+- in the argocd applications, the todo-staging is still showing Processing status even though synching is ok.
+
+```sh
+kubectl get applications -n argocd
+```
+
+```table
+NAME           SYNC STATUS   HEALTH STATUS
+log-output     Synced        Healthy
+todo-app       Unknown       Healthy
+todo-staging   Synced        Progressing
+```
+
+- I created a test generator cronjob to initiate wiki url fetch but its logs again shows 500
+
+```sh
+kubectl create job todo-generator-test --from=cronjob/todo-generator -n staging
+```
+
+- and test logs:
+
+```sh
+kubectl logs job/todo-generator-test -n staging
+```
+
+```table
+Error: Todo backend returned 500
+    at createTodo (/usr/src/app/index.js:28:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async main (/usr/src/app/index.js:39:3)
+```
+
+- since the error is in todo-backend, lets log:
+
+```sh
+kubectl logs deployment/todo-backend -n staging
+```
+
+- above command clearifies that relation "todos" does not exist. PostgreSQL was reachable for the todo request, but the required todos table was missing.
+- we need to create `todos` table
+- lets connect to PostgreSQL as `todo-postgres-0` itself is in Running state and create table in staging
+
+```sh
+kubectl exec -it todo-postgres-0 -n staging -- psql -U postgres -d postgres -c "CREATE TABLE todos (id SERIAL PRIMARY KEY, todo TEXT NOT NULL, done BOOLEAN NOT NULL DEFAULT FALSE);"
+```
+
+- verify table has required columns:
+
+```sh
+kubectl exec -it todo-postgres-0 -n staging -- psql -U postgres -d postgres -c '\d todos'
+```
+
+```table
+ Column |  Type   | Collation | Nullable |              Default
+--------+---------+-----------+----------+-----------------------------------
+ id     | integer |           | not null | nextval('todos_id_seq'::regclass)
+ todo   | text    |           | not null |
+ done   | boolean |           | not null | false
+Indexes:
+    "todos_pkey" PRIMARY KEY, btree (id)
+```
+
+- create test cronjob again:
+
+```sh
+kubectl create job todo-generator-test-2 --from=cronjob/todo-generator -n staging
+```
+
+- check logs:
+
+```sh
+kubectl logs job/todo-generator-test-2 -n staging
+```
+
+- the above outputs:
+
+```table
+Random Wikipedia URL: https://en.wikipedia.org/wiki/Slipstream_(1989_film)
+Created todo: Read https://en.wikipedia.org/wiki/Slipstream_(1989_film)
+```
+
+- lets verify frontend (app-todo) is working by port forwarding for now:
+
+```sh
+kubectl port-forward -n staging service/todo-app-svc 3000:3000
+```
+
+- the site is up an running with all add to do, Mark done, Done, automated wiki read links.
+
+# there is no db backup for staging:
+
+```sh
+kubectl get cronjob -n staging
+```
+
+```table
+NAME             SCHEDULE    TIMEZONE   SUSPEND   ACTIVE   LAST SCHEDULE   AGE
+todo-generator   0 * * * *   <none>     False     0        13m             7h58m
+```
+
+# No Slack notification sent
+
+- because following condition added in staging helps the broadcaster logic to not sent Slack notificaiton:
+
+```yaml
+- name: LOG_ONLY
+  value: "true"
+```
+
+```js
+if (!LOG_ONLY) {
+  await sendToSlack(event);
+}
+```
+
+- above condition is not met by staging config so no slack message triggered but the same will be met in production later and notification will be sent. This we will test later when we do for production part.
