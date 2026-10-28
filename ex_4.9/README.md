@@ -266,3 +266,164 @@ if (!LOG_ONLY) {
 ```
 
 - above condition is not met by staging config so no slack message triggered but the same will be met in production later and notification will be sent. This we will test later when we do for production part.
+- created temporary tag 4.9.1 for testing `git tag 4.9.1`
+- then `git push origin 4.9.1`
+- now, apply production application configuration that has new tag now 4.9.1
+
+```sh
+kubectl apply -f ex_4.9/argocd/todo-production-application.yaml
+```
+
+- after apply, checking production pods are running
+
+```sh
+kubectl get pods -n production
+```
+
+```table
+NAME                            READY   STATUS    RESTARTS   AGE
+broadcaster-d564cdf58-b7jrv     1/1     Running   0          76s
+broadcaster-d564cdf58-glp4f     1/1     Running   0          76s
+broadcaster-d564cdf58-j6lcw     1/1     Running   0          76s
+broadcaster-d564cdf58-k9kk5     1/1     Running   0          76s
+broadcaster-d564cdf58-ml9dr     1/1     Running   0          76s
+broadcaster-d564cdf58-v2mn4     1/1     Running   0          76s
+todo-app-77d4cf858c-q5s4s       1/1     Running   0          76s
+todo-backend-7dc5458ccb-jhbsl   1/1     Running   0          76s
+todo-postgres-0                 1/1     Running   0          76s
+```
+
+- verify production specific todo db backup and generator are there:
+
+```sh
+kubectl get cronjob -n production
+```
+
+```table
+NAME             SCHEDULE    TIMEZONE   SUSPEND   ACTIVE   LAST SCHEDULE   AGE
+todo-db-backup   0 0 * * *   <none>     False     0        <none>          5m3s
+todo-generator   0 * * * *   <none>     False     0        <none>          5m3s
+```
+
+- check the broadcaster's configuration contains `LOG_ONLY="false"`:
+
+```sh
+kubectl get deployment broadcaster -n production -o yaml
+```
+
+- the above shows the config containing all required values:
+
+```yaml
+spec:
+  containers:
+    - env:
+        - name: LOG_ONLY
+          value: "false"
+        - name: NATS_URL
+          value: nats://my-nats.nats.svc.cluster.local:4222
+        - name: SLACK_WEBHOOK_URL
+          valueFrom:
+            secretKeyRef:
+              key: SLACK_WEBHOOK_URL
+              name: broadcaster-secret
+      image: todo-broadcaster:ex-4.9
+      imagePullPolicy: IfNotPresent
+```
+
+- Like in staging, we need to exactly create the same database table, columns:
+
+```sh
+kubectl exec -it todo-postgres-0 -n production -- psql -U postgres -d postgres -c "CREATE TABLE IF NOT EXISTS todos (id SERIAL PRIMARY KEY, todo TEXT NOT NULL, done BOOLEAN NOT NULL DEFAULT FALSE);"
+```
+
+- verify table has required columns:
+
+```sh
+kubectl exec -it todo-postgres-0 -n production -- psql -U postgres -d postgres -c '\d todos'
+```
+
+- lets create test cronjob from todo-generator
+
+```sh
+kubectl create job todo-generator-test-3 --from=cronjob/todo-generator -n production
+```
+
+- check logs:
+
+```sh
+kubectl logs job/todo-generator-test-3 -n production
+```
+
+```table
+Random Wikipedia URL: https://en.wikipedia.org/wiki/Three_Wooden_Crosses:_The_Inspirational_Hits_of_Randy_Travis
+Created todo: Read https://en.wikipedia.org/wiki/Three_Wooden_Crosses:_The_Inspirational_Hits_of_Randy_Travis
+```
+
+- lets verify frontend (app-todo) is working by port forwarding for now:
+
+```sh
+kubectl port-forward -n production service/todo-app-svc 3001:3000
+```
+
+- production site is up and running, added a todo, marked done, and got Slack notifications triggered like in the image:
+  ![Production Slack Notification](./production_slack_notification.png)
+- lets run one time production backup test:
+
+```sh
+kubectl create job todo-db-backup-test --from=cronjob/todo-db-backup -n production
+```
+
+- check if backup succeeded:
+
+```sh
+kubectl get job todo-db-backup-test -n production
+```
+
+```table
+NAME                  STATUS     COMPLETIONS   DURATION   AGE
+todo-db-backup-test   Complete   1/1           4s         49s
+```
+
+- backup succeeded, lets check the logs of backups:
+
+```sh
+kubectl logs job/todo-db-backup-test -n production
+```
+
+- check the backup cronjob config and status:
+
+```sh
+kubectl get cronjob todo-db-backup -n production -o yaml
+```
+
+- log of above shows lastSucccessfulTime suggests the backup job succeeded
+
+```yaml
+  schedule: 0 0 * * *
+  successfulJobsHistoryLimit: 3
+  suspend: false
+status:
+  lastSuccessfulTime: "2026-10-28T12:20:07Z"
+```
+
+- further test, lets run backup-inspector temporarilly using a small Linux image:
+
+```sh
+kubectl run backup-inspector -n production --image=busybox:1.36 --restart=Never --overrides='{"spec":{"containers":[{"name":"inspector","image":"busybox:1.36","command":["sh","-c","ls -lh /backup && echo --- && du -h /backup/* 2>/dev/null"],"volumeMounts":[{"name":"backup","mountPath":"/backup"}]}],"volumes":[{"name":"backup","persistentVolumeClaim":{"claimName":"todo-backup-pvc"}}]}}'
+```
+
+- then check logs:
+
+```sh
+kubectl logs backup-inspector -n production
+```
+
+```table
+total 4K
+-rw-r--r--    1 root     root        2.3K Oct 28 12:20 todo-backup-2026-10-28T12-20-04Z.sql
+---
+4.0K    /backup/todo-backup-2026-10-28T12-20-04Z.sql
+```
+
+- above confirms that the backup file exists!!
+- so everything works in production also. Next, i will create 4.9 tag and commit again to run the produciton with `targetRevision: 4.9`
