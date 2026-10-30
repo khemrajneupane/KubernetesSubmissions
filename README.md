@@ -58,3 +58,7 @@
 - [4.8](https://github.com/khemrajneupane/KubernetesSubmissions/tree/4.8/ex_4.8)
 - [4.9](https://github.com/khemrajneupane/KubernetesSubmissions/tree/4.9/ex_4.9)
 - [4.10](https://github.com/khemrajneupane/kubernetesSubmissions-configuration/tree/4.10/ex_4.10)
+
+### Chapter 6
+
+- [5.1](https://github.com/khemrajneupane/kubernetesSubmissions-configuration/tree/5.1/ex_5.1)
