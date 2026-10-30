@@ -61,4 +61,4 @@
 
 ### Chapter 6
 
-- [5.1](https://github.com/khemrajneupane/kubernetesSubmissions-configuration/tree/5.1/ex_5.1)
+- [5.1](https://github.com/khemrajneupane/KubernetesSubmissions/tree/5.1/ex_5.1)
