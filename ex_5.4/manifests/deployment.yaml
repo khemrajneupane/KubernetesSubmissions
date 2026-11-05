@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wikipedia
+  namespace: exercises
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wikipedia
+  template:
+    metadata:
+      labels:
+        app: wikipedia
+    spec:
+      # Runs first, before the application containers
+      initContainers:
+        - name: download-kubernetes-page
+          image: alpine:3.21
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -e
+              apk add --no-cache curl
+              curl -fL --retry 3 https://en.wikipedia.org/wiki/Kubernetes \
+                -o /usr/share/nginx/html/index.html
+          volumeMounts:
+            - name: wikipedia-content
+              mountPath: /usr/share/nginx/html
+
+      containers:
+        # Main application
+        - name: nginx
+          image: nginx:1.27-alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: wikipedia-content
+              mountPath: /usr/share/nginx/html
+
+        # sidecar container
+        - name: wikipedia-sidecar
+          image: alpine:3.21
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -e
+              apk add --no-cache curl
+
+              while true; do
+                delay=$((300 + RANDOM % 601))
+                echo "Next Wikipedia download in ${delay} seconds"
+                sleep "$delay"
+
+                if curl -fL --retry 3 \
+                  https://en.wikipedia.org/wiki/Special:Random \
+                  -o /usr/share/nginx/html/random.html; then
+                  echo "Random Wikipedia page downloaded successfully"
+                else
+                  echo "Wikipedia download failed; will try again later"
+                fi
+              done
+          volumeMounts:
+            - name: wikipedia-content
+              mountPath: /usr/share/nginx/html
+
+      # Shared temporary storage
+      volumes:
+        - name: wikipedia-content
+          emptyDir: {}
