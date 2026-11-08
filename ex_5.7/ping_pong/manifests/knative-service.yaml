@@ -1,0 +1,15 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: pingpong
+  namespace: exercises
+spec:
+  template:
+    spec:
+      containers:
+        - image: docker.io/khemrajneupane/ping_pong:ex-5.7
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DATABASE_URL
+              value: "postgres://postgres:postgres@postgres-svc:5432/postgres"

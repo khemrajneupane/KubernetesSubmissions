@@ -3,7 +3,7 @@ const crypto = require("crypto");
 const fs = require("fs");
 
 const PORT = process.env.PORT || 3000;
-const PING_PONG_URL = "http://ping-pong-svc:3000/pings";
+const PING_PONG_URL = "http://pingpong.exercises.svc.cluster.local/pings";
 const GREETER_URL = "http://greeter-svc:3000";
 const CONFIG_FILE = "/usr/src/app/config/information.txt";
 
